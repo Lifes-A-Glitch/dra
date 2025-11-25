@@ -59,8 +59,10 @@ get_os(){
   local os
   os=$(uname -s)
   case "$os" in
-    MINGW* | Win*) echo "Windows" ;;
-    *) echo "$os" ;;
+    MINGW* | Win* | MSYS* | CYGWIN*) echo "Windows" ;;
+    Darwin*) echo "Darwin" ;;
+    Linux*) echo "Linux" ;;
+    *) error "Unsupported operating system: $os" ;;
   esac
 }
 

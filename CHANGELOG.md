@@ -7,6 +7,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Add support for installing RPM packages ([#335](https://github.com/devmatteini/dra/issues/335))
+
+### Fixed
+
+- Handle more Windows OS formats in install script ([#336](https://github.com/devmatteini/dra/issues/336))
+
 ## [0.9.1] - 2025-11-11
 
 ### Fixed

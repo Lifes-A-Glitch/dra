@@ -5,6 +5,7 @@ use std::process::{Command, Stdio};
 
 pub mod images {
     pub const UBUNTU: &str = "dra-ubuntu";
+    pub const FEDORA: &str = "dra-fedora";
 }
 
 pub mod users {
@@ -34,6 +35,7 @@ impl Docker {
         Self { id }
     }
 
+    #[allow(clippy::zombie_processes)]
     pub fn stop(&self) {
         Command::new("docker")
             .arg("stop")

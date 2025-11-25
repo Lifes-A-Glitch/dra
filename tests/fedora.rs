@@ -6,10 +6,10 @@ use crate::docker::{Docker, ExecArgs, images, users};
 
 #[test]
 fn installed_successfully() {
-    let container = Docker::run(images::UBUNTU);
+    let container = Docker::run(images::FEDORA);
 
     let result = container.exec(
-        "dra download -i -s helloworld.deb devmatteini/dra-tests",
+        "dra download -i -s helloworld.rpm devmatteini/dra-tests",
         ExecArgs::Default,
     );
 
@@ -19,16 +19,16 @@ fn installed_successfully() {
 
 #[test]
 fn upgrade_successfully() {
-    let container = Docker::run(images::UBUNTU);
+    let container = Docker::run(images::FEDORA);
 
     let result = container.exec(
-        "dra download -i -s helloworld.deb devmatteini/dra-tests",
+        "dra download -i -s helloworld.rpm devmatteini/dra-tests",
         ExecArgs::Default,
     );
     assert_success(result);
 
     let result = container.exec(
-        "dra download -i -s helloworld.deb devmatteini/dra-tests",
+        "dra download -i -s helloworld.rpm devmatteini/dra-tests",
         ExecArgs::Default,
     );
     assert_success(result);
@@ -36,14 +36,14 @@ fn upgrade_successfully() {
 
 #[test]
 fn wrong_privileges() {
-    let container = Docker::run(images::UBUNTU);
+    let container = Docker::run(images::FEDORA);
 
     let result = container.exec(
-        "dra download -i -s helloworld.deb devmatteini/dra-tests",
+        "dra download -i -s helloworld.rpm devmatteini/dra-tests",
         ExecArgs::User(users::TESTER.into()),
     );
 
     let output = assert_error(result);
-    assert_contains("dpkg", &output);
-    assert_contains("requires superuser privilege", &output);
+    assert_contains("rpm", &output);
+    assert_contains("Permission denied", &output);
 }
