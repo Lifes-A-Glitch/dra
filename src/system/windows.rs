@@ -1,17 +1,17 @@
 use crate::github::release::Asset;
-use crate::system::core::System;
+use crate::system::core::{Arch, OS, System};
 
-pub struct WindowsAmd64;
-impl WindowsAmd64 {
-    const OS: &'static str = "windows";
-    const ARCH: &'static str = "x86_64";
+pub struct WindowsX86_64;
+impl WindowsX86_64 {
+    const OS: OS = OS::Windows;
+    const ARCH: Arch = Arch::X86_64;
 }
 
-impl System for WindowsAmd64 {
-    fn os(&self) -> &str {
+impl System for WindowsX86_64 {
+    fn os(&self) -> OS {
         Self::OS
     }
-    fn arch(&self) -> &str {
+    fn arch(&self) -> Arch {
         Self::ARCH
     }
     fn matches(&self, asset: &Asset) -> bool {
@@ -26,21 +26,15 @@ impl System for WindowsAmd64 {
     }
 }
 
-fn is_same_os(os: &str, asset_name: &str) -> bool {
-    if asset_name.contains(os) {
-        return true;
-    }
-    let aliases = vec!["win64", "win-64bit"];
+fn is_same_os(os: OS, asset_name: &str) -> bool {
+    let aliases = vec![os.as_str(), "win64", "win-64bit"];
     aliases.into_iter().any(|alias| asset_name.contains(alias))
 }
 
-fn is_same_arch(arch: &str, asset_name: &str) -> bool {
-    if asset_name.contains(arch) {
-        return true;
-    }
+fn is_same_arch(arch: Arch, asset_name: &str) -> bool {
     let aliases: Vec<&str> = match arch {
-        "x86_64" => vec!["amd64", "x64", "win64", "win-64bit"],
-        _ => return false,
+        Arch::X86_64 => vec!["x86_64", "amd64", "x64", "win64", "win-64bit"],
+        Arch::ArmV6 | Arch::Arm64 => return false,
     };
     aliases.into_iter().any(|alias| asset_name.contains(alias))
 }
@@ -178,5 +172,5 @@ mod tests {
         }
     }
 
-    const WINDOWS_X86_64: WindowsAmd64 = WindowsAmd64 {};
+    const WINDOWS_X86_64: WindowsX86_64 = WindowsX86_64 {};
 }

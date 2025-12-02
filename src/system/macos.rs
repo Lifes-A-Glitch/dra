@@ -1,17 +1,17 @@
 use crate::github::release::Asset;
-use crate::system::core::System;
+use crate::system::core::{Arch, OS, System};
 
-pub struct MacOSAmd64;
-impl MacOSAmd64 {
-    const OS: &'static str = "macos";
-    const ARCH: &'static str = "x86_64";
+pub struct MacOSX86_64;
+impl MacOSX86_64 {
+    const OS: OS = OS::Mac;
+    const ARCH: Arch = Arch::X86_64;
 }
 
-impl System for MacOSAmd64 {
-    fn os(&self) -> &str {
+impl System for MacOSX86_64 {
+    fn os(&self) -> OS {
         Self::OS
     }
-    fn arch(&self) -> &str {
+    fn arch(&self) -> Arch {
         Self::ARCH
     }
     fn matches(&self, asset: &Asset) -> bool {
@@ -24,15 +24,15 @@ impl System for MacOSAmd64 {
 
 pub struct MacOSArm64;
 impl MacOSArm64 {
-    const OS: &'static str = "macos";
-    const ARCH: &'static str = "aarch64";
+    const OS: OS = OS::Mac;
+    const ARCH: Arch = Arch::Arm64;
 }
 
 impl System for MacOSArm64 {
-    fn os(&self) -> &str {
+    fn os(&self) -> OS {
         Self::OS
     }
-    fn arch(&self) -> &str {
+    fn arch(&self) -> Arch {
         Self::ARCH
     }
     fn matches(&self, asset: &Asset) -> bool {
@@ -43,7 +43,7 @@ impl System for MacOSArm64 {
     }
 }
 
-fn matches(os: &str, arch: &str, asset: &Asset) -> bool {
+fn matches(os: OS, arch: Arch, asset: &Asset) -> bool {
     let asset_name = asset.name.to_lowercase();
     let same_arch = is_same_arch(arch, &asset_name);
     let is_same_system = is_same_os(os, &asset_name) && same_arch;
@@ -51,22 +51,16 @@ fn matches(os: &str, arch: &str, asset: &Asset) -> bool {
     is_same_system || is_same_arch_and_extension
 }
 
-fn is_same_os(os: &str, asset_name: &str) -> bool {
-    if asset_name.contains(os) {
-        return true;
-    }
-    let aliases = vec!["darwin", "apple", "osx"];
+fn is_same_os(os: OS, asset_name: &str) -> bool {
+    let aliases = vec![os.as_str(), "darwin", "apple", "osx"];
     aliases.into_iter().any(|alias| asset_name.contains(alias))
 }
 
-fn is_same_arch(arch: &str, asset_name: &str) -> bool {
-    if asset_name.contains(arch) {
-        return true;
-    }
+fn is_same_arch(arch: Arch, asset_name: &str) -> bool {
     let aliases: Vec<&str> = match arch {
-        "x86_64" => vec!["amd64", "x64"],
-        "aarch64" => vec!["arm64"],
-        _ => return false,
+        Arch::X86_64 => vec!["x86_64", "amd64", "x64"],
+        Arch::Arm64 => vec!["aarch64", "arm64"],
+        Arch::ArmV6 => return false,
     };
     aliases.into_iter().any(|alias| asset_name.contains(alias))
 }
@@ -82,8 +76,15 @@ const ARCHIVES: [&str; 7] = [".gz", ".tgz", ".bz2", ".tbz", ".xz", ".txz", ".zip
 
 fn asset_priority(a: &Asset) -> i32 {
     let is_archive = ARCHIVES.iter().any(|x| a.name.ends_with(x));
+    let is_dmg = a.name.ends_with(".dmg");
 
-    if is_archive { 1 } else { 2 }
+    if is_archive {
+        1
+    } else if is_dmg {
+        2
+    } else {
+        3
+    }
 }
 
 #[cfg(test)]
@@ -94,7 +95,7 @@ mod tests {
     fn asset_found() {
         let asset = any_asset("mypackage-x86_64-apple-darwin.tar.gz");
 
-        let result = matches("macos", "x86_64", &asset);
+        let result = matches(OS::Mac, Arch::X86_64, &asset);
 
         assert!(result)
     }
@@ -103,7 +104,7 @@ mod tests {
     fn found_by_os_alias() {
         let asset = any_asset("mypackage-x86_64-apple-darwin.tar.gz");
 
-        let result = matches("macos", "x86_64", &asset);
+        let result = matches(OS::Mac, Arch::X86_64, &asset);
 
         assert!(result)
     }
@@ -112,7 +113,7 @@ mod tests {
     fn found_by_arch_alias() {
         let asset = any_asset("mypackage-amd64-apple-darwin.tar.gz");
 
-        let result = matches("macos", "x86_64", &asset);
+        let result = matches(OS::Mac, Arch::X86_64, &asset);
 
         assert!(result)
     }
@@ -121,7 +122,7 @@ mod tests {
     fn not_matching() {
         let asset = any_asset("mypackage-x86_64-apple-darwin.tar.gz");
 
-        let result = matches("macos", "arm", &asset);
+        let result = matches(OS::Mac, Arch::ArmV6, &asset);
 
         assert!(!result)
     }
@@ -130,7 +131,7 @@ mod tests {
     fn find_asset_case_insensitive() {
         let asset = any_asset("mypackage-x86_64-dArWIn.tar.gz");
 
-        let result = matches("macos", "x86_64", &asset);
+        let result = matches(OS::Mac, Arch::X86_64, &asset);
 
         assert!(result)
     }
@@ -163,7 +164,7 @@ mod tests {
     fn found_by_asset_extension_and_arch() {
         let asset = any_asset("mypackage-x86_64.dmg");
 
-        let result = matches("macos", "x86_64", &asset);
+        let result = matches(OS::Mac, Arch::X86_64, &asset);
 
         assert!(result)
     }
@@ -173,7 +174,7 @@ mod tests {
     fn not_found_by_asset_extension_without_arch() {
         let asset = any_asset("mypackage.dmg");
 
-        let result = matches("macos", "x86_64", &asset);
+        let result = matches(OS::Mac, Arch::X86_64, &asset);
 
         assert!(!result);
     }
